@@ -3,17 +3,21 @@
 
 class StereoCorrelator{
 public:
-    StereoCorrelator(const std::string &leftImagePath, const std::string &rightImagePath,
-                        int block_size, int search_range, const std::string &outputImagePath);
+    StereoCorrelator(const char* leftImagePath, const char* rightImagePath,
+                        int block_size, int search_range, const char* outputImagePath);
 
-    void calculateDisparityMap();
+    void calculateDisparityMap(
+        const char* leftImagePath,
+        const char* rightImagePath,
+        const char* outputImagePath
+    );
 
 private:
-    std::string leftImagePath;
-    std::string rightImagePath;
+    const char* leftImagePath;
+    const char* rightImagePath;
     int block_size;
     int search_range;
-    std::string outputImagePath;
+    const char* outputImagePath;
 };
 
 
