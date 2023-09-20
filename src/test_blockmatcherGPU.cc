@@ -1,8 +1,9 @@
 #include <iostream>
-#include "BlockMatcherCPU.h" 
 #include "BlockMatcherGPU.h" 
+
 #include <nvToolsExt.h>
 #include <nvToolsExtCuda.h>
+
 
 int main() {
     int rows = 1000;
@@ -23,22 +24,16 @@ int main() {
     }
 
     // Create a BlockMatcherGPU instance
-    BlockMatcherCPU blockMatchercpu(rows, cols, block_size, search_range);
+    BlockMatcherGPU blockMatchergpu(rows, cols, block_size, search_range);
 
     std::cout << "ROWS" << " ";
     std::cout << rows << " ";
     std::cout << cols << "\n";
     // Compute the disparity map using the dummy data
-    blockMatchercpu.compute_disparity(left_image, right_image);
+    blockMatchergpu.compute_disparity(left_image, right_image);
 
     // Access the disparity map (disparity values are stored in disparityProcessor.disparity_map)
-    std::vector<double> disparity_map_cpu = blockMatchercpu.disparity_map;
+    std::vector<double> disparity_map = blockMatchergpu.disparity_map;
 
-    std::cout << "GPU" << " ";
-
-    BlockMatcherGPU blockMatchergpu(rows, cols, block_size, search_range);
-    blockMatchercpu.compute_disparity(left_image, right_image);
-
-    std::vector<double> disparity_map_gpu = blockMatchercpu.disparity_map;
     return 0;
 }

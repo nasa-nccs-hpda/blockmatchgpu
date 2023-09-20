@@ -1,23 +1,23 @@
-CXX = g++
-CXXFLAGS = -std=c++17 -Wall
-LDFLAGS = -lgdal # Linker flags for GDAL
+CXX=nvcc
+CXXFLAGS =-std=c++17 -I/discover/nobackup/projects/akmosaic/micromamba/envs/aspv2/include -L/discover/nobackup/projects/akmosaic/micromamba/envs/aspv2/lib -shared
+LDFLAGS=-lgdal # Linker flags for GDAL
 
-SRCS = src/stereoCorrelator.cc src/stereoCorrelator.h src/BlockMatcherGPU.cc src/BlockMatcherGPU.h
-OBJS = $(SRCS:.cc=.o)
+SRCS=src/stereoCorrelator.cc src/BlockMatcherGPU.cc
+OBJS=$(SRCS:.cc=.o)
 
-EXEC = stereo_corr
+EXEC=stereo_corr
 
-INSTALL_DIR = ./install
+INSTALL_DIR=./install
 
 .PHONY: all clean install
 
 all: $(EXEC)
 
 $(EXEC): $(OBJS)
-	$(CXX) $(CXXFLAGS) $(OBJS) -o $(INSTALL_DIR)/bin/$(EXEC) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(OBJS) $(LDFLAGS) -o $(INSTALL_DIR)/bin/$(EXEC)
 
 %.o: %.cc
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -c $< -o $@
 
 install:
 	mkdir -p $(INSTALL_DIR)/bin

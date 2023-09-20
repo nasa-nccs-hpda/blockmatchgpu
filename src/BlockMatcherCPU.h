@@ -1,11 +1,11 @@
-#ifndef BLOCKMATCHERGPU_H
-#define BLOCKMATCHERGPU_H
+#ifndef BLOCKMATCHERCPU_H
+#define BLOCKMATCHERCPU_H
 
 #include <vector>
 
-class BlockMatcherGPU {
+class BlockMatcherCPU {
 public:
-    BlockMatcherGPU(int rows, int c, int block_size, int search_range);
+    BlockMatcherCPU(int rows, int c, int block_size, int search_range);
     int r, c, block_size, half_block_size, search_range;
     std::vector<double> disparity_map;
     void compute_disparity(const std::vector<double>& left_image, const std::vector<double>& right_image);
@@ -18,4 +18,4 @@ private:
                            const std::vector<double>& kernelCutRight);
 };
 
-#endif // BlockMatcherGPU_H
+#endif // BlockMatcherCPU_H
