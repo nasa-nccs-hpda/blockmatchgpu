@@ -9,6 +9,7 @@ public:
     int r, c, block_size, half_block_size, search_range;
     std::vector<double> disparity_map;
     void compute_disparity(const std::vector<double>& left_image, const std::vector<double>& right_image);
+    void compute_disparity_gpu(const std::vector<double>& left_image, const std::vector<double>& right_image);
 
     std::vector<double>& getDisparityMap();
 

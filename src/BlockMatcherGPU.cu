@@ -224,6 +224,66 @@ void BlockMatcherGPU::compute_disparity(const std::vector<double>& left_image, c
     }
 }
 
+void BlockMatcherGPU::compute_disparity_gpu(const std::vector<double>& left_image, const std::vector<double>& right_image) {
+
+    int max_displacement = search_range;
+
+    for (int i = half_block_size; i < r - half_block_size; i++) {
+        for (int j = half_block_size; j < c - half_block_size; j++) {
+            
+            // Take a cutout centered on each pixel in the left image
+            std::vector<double> kernelCutLeft(block_size * block_size, 0.0);
+            for (int y = -half_block_size; y <= half_block_size; y++) {
+                for (int x = -half_block_size; x <= half_block_size; x++) {
+                    kernelCutLeft[(y + half_block_size) * block_size + (x + half_block_size)] = left_image[(i + y) * c + (j + x)];
+                }
+            }
+
+            int min_disparity = 0;
+            double min_sos = std::numeric_limits<double>::max();
+            // std::cout << i << " ";
+            // std::cout << std::endl;
+
+            // Search within the specified search range
+            for (int d = 0; d <= max_displacement; d++) {
+                // std::cout << "Searching disparity range" << d << " ";
+                // std::cout << std::endl;
+                // Shift the right image by the current disparity
+                std::vector<double> kernelCutRight(block_size * block_size, 0.0);
+                for (int y = -half_block_size; y <= half_block_size; y++) {
+                    for (int x = -half_block_size; x <= half_block_size; x++) {
+                        kernelCutRight[(y + half_block_size) * block_size + (x + half_block_size)] = right_image[(i + y) * c + (j + x - d)];
+                    }
+                }
+
+                // Compute the Sum of Squares (SOS) between the cutout and the matching cutout
+                //double sos = compute_sos(kernelCutLeft, kernelCutRight);
+                //cout << "Sum of squares output " << sos << " \n";
+
+                // call the global function here
+                //cout << "Calling compute_sos_gpu\n";
+                //cout << "Left side kernel " << kernelCutLeft.size() << "\n";
+                //cout << "Right side kernel " << kernelCutRight.size() << "\n";
+
+                double sos = compute_sos_gpu(kernelCutLeft, kernelCutRight);
+
+                //cout << "Done with compute_sos_gpu\n";
+
+                // for loop to sum the values
+
+                // Update the disparity if the SOS is smaller
+                if (sos < min_sos) {
+                    min_sos = sos;
+                    min_disparity = d;
+                }
+            }
+
+            // Store the disparity in the disparity map
+            disparity_map[i * c + j] = min_disparity;
+        }
+    }
+}
+
 std::vector<double>& BlockMatcherGPU::getDisparityMap() {
     return disparity_map;
 }
