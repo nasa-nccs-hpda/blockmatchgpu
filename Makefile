@@ -1,5 +1,5 @@
 CXX=nvcc
-CXXFLAGS=-std=c++17
+CXXFLAGS=-std=c++17 -x cu
 LDFLAGS=-lgdal # Linker flags for GDAL
 
 SRCS=src/BlockMatcherGPU.cu src/BlockMatcherCPU.cc

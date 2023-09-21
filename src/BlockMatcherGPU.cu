@@ -1,6 +1,11 @@
 #include "BlockMatcherGPU.h"
 #include <iostream>
 #include <cmath>
+#include <nvToolsExt.h>
+#include <nvToolsExtCuda.h>
+
+#define NVTX_START(name) nvtxRangePushA(name)
+#define NVTX_STOP() nvtxRangePop()
 
 BlockMatcherGPU::BlockMatcherGPU(int rows, int cols, int block_size, int search_range) {
     r = rows;
@@ -41,38 +46,36 @@ double BlockMatcherGPU::compute_box_sum(const std::vector<double>& kernelCutLeft
     return box_sum;
 }
 
-void BlockMatcherGPU::compute_disparity(const std::vector<double>& left_image, const std::vector<double>& right_image) {
-    int max_displacement = search_range;
+__global__ void compute_disparity_gpu(const double* left_image, const double* right_image,
+                                      double* disparity_map, const int r, const int c,
+                                      const int block_size, const int max_displacement,
+                                      const int half_block_size, const int d_block_size) {
 
-    for (int i = half_block_size; i < r - half_block_size; i++) {
-        for (int j = half_block_size; j < c - half_block_size; j++) {
-            // Take a cutout centered on each pixel in the left image
-            std::vector<double> kernelCutLeft(block_size * block_size, 0.0);
-            for (int y = -half_block_size; y <= half_block_size; y++) {
-                for (int x = -half_block_size; x <= half_block_size; x++) {
-                    kernelCutLeft[(y + half_block_size) * block_size + (x + half_block_size)] = left_image[(i + y) * c + (j + x)];
-                }
-            }
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+    int xthreads = gridDim.x * blockDim.x;
+    int ythreads = gridDim.y * blockDim.y;
+
+    for (int i = row + half_block_size; i < r - half_block_size; i += ythreads) {
+        for (int j = col + half_block_size; j < c - half_block_size; j += xthreads) {
 
             int min_disparity = 0;
-            double min_sos = std::numeric_limits<double>::max();
-            // std::cout << i << " ";
-            // std::cout << std::endl;
+            double min_sos = 179769000000000000; // max of what a double precision would get us
 
             // Search within the specified search range
             for (int d = 0; d <= max_displacement; d++) {
-                // std::cout << "Searching disparity range" << d << " ";
-                // std::cout << std::endl;
-                // Shift the right image by the current disparity
-                std::vector<double> kernelCutRight(block_size * block_size, 0.0);
+                double sos = 0;
+
                 for (int y = -half_block_size; y <= half_block_size; y++) {
                     for (int x = -half_block_size; x <= half_block_size; x++) {
-                        kernelCutRight[(y + half_block_size) * block_size + (x + half_block_size)] = right_image[(i + y) * c + (j + x - d)];
+                        int left_idx = (i + y) * c + (j + x);
+                        int right_idx = (i + y) * c + (j + x - d);
+                        double left_pixel = left_image[left_idx];
+                        double right_pixel = right_image[right_idx];
+                        double diff = left_pixel - right_pixel;
+                        sos += diff * diff;
                     }
                 }
-
-                // Compute the Sum of Squares (SOS) between the cutout and the matching cutout
-                double sos = compute_sos(kernelCutLeft, kernelCutRight);
 
                 // Update the disparity if the SOS is smaller
                 if (sos < min_sos) {
@@ -85,6 +88,67 @@ void BlockMatcherGPU::compute_disparity(const std::vector<double>& left_image, c
             disparity_map[i * c + j] = min_disparity;
         }
     }
+}
+
+void BlockMatcherGPU::compute_disparity(const std::vector<double>& left_image, const std::vector<double>& right_image) {
+    int max_displacement = search_range;
+    // int block_size_1d = block_size * block_size;
+
+    std::cout << "BLOCKDEF" << "\n";
+    dim3 threads = {32, 32};
+    dim3 blocks;
+
+    cudaFree(0);
+    int deviceID;
+    cudaDeviceProp prop;
+    cudaGetDevice(&deviceID);
+    cudaGetDeviceProperties(&prop, deviceID); 
+    blocks = {(unsigned)prop.multiProcessorCount, 2};
+
+    // std::cout << "Num blocks: " << blocks << " \n"; 
+    
+    // dim3 blockDim(block_size, block_size);
+    // dim3 gridDim((c - 2 * half_block_size + blockDim.x - 1) / blockDim.x + 1, (r - 2 * half_block_size + blockDim.y - 1) / blockDim.y + 1);
+
+    std::cout << "MALLOC CUDA" << "\n";
+
+    double *left_image_device;
+    double *right_image_device;
+    double *disparity_map_device;
+    double *kernelCutLeft;
+    double *kernelCutRight;
+    cudaMallocManaged(&left_image_device, left_image.size()*sizeof(double));
+    cudaMallocManaged(&right_image_device, right_image.size()*sizeof(double));
+    cudaMallocManaged(&disparity_map_device, left_image.size()*sizeof(double));
+    cudaMallocManaged(&kernelCutLeft, block_size*block_size*sizeof(double));
+    cudaMallocManaged(&kernelCutRight, block_size*block_size*sizeof(double));
+
+    std::cout << "SIZE: " << left_image.size() << "\n";
+
+    std::cout << "ALLOCATING AND COPY" << "\n";
+    // NVTX_START("Allocating and copying GPU memory");
+    for (int i = 0; i < left_image.size(); i++){
+        left_image_device[i] = left_image[i];
+        right_image_device[i] = right_image[i];
+        disparity_map_device[i] = -7.0f;
+    }
+    // NVTX_STOP();
+    
+    std::cout << "STARTING COMP" << "\n";
+    int d_block_size = block_size * block_size;
+    
+    // NVTX_START("GPU Exec");
+    compute_disparity_gpu<<<blocks, threads>>>(left_image_device, right_image_device, disparity_map_device, r, c, block_size, max_displacement, half_block_size, d_block_size);
+
+    cudaDeviceSynchronize();
+    /// NVTX_STOP();
+
+    for (int i = 0; i < left_image.size(); i++){
+        disparity_map[i] = disparity_map_device[i];
+    }
+    
+    std::cout << "DONE GPU" << "\n";
+
 }
 
 std::vector<double>& BlockMatcherGPU::getDisparityMap() {

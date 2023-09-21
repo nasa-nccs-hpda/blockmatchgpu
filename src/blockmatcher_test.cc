@@ -25,7 +25,7 @@ int main() {
     // Create a BlockMatcherGPU instance
     BlockMatcherCPU blockMatchercpu(rows, cols, block_size, search_range);
 
-    std::cout << "ROWS" << " ";
+    std::cout << "CPU rows: " << " ";
     std::cout << rows << " ";
     std::cout << cols << "\n";
     // Compute the disparity map using the dummy data
@@ -34,11 +34,24 @@ int main() {
     // Access the disparity map (disparity values are stored in disparityProcessor.disparity_map)
     std::vector<double> disparity_map_cpu = blockMatchercpu.disparity_map;
 
+    int idx0 = rand() % 999999;
+    int idx1 = rand() % 999999;
+    int idx2 = rand() % 999999;
+
+    std::cout << disparity_map_cpu[idx0] << " DISPARITY_MAP_CPU " << " \n";
+    std::cout << disparity_map_cpu[idx1] << " DISPARITY_MAP_CPU " << " \n";
+    std::cout << disparity_map_cpu[idx2] << " DISPARITY_MAP_CPU " << " \n";
+
     std::cout << "GPU" << " ";
 
     BlockMatcherGPU blockMatchergpu(rows, cols, block_size, search_range);
-    blockMatchercpu.compute_disparity(left_image, right_image);
+    blockMatchergpu.compute_disparity(left_image, right_image);
 
-    std::vector<double> disparity_map_gpu = blockMatchercpu.disparity_map;
+    std::vector<double> disparity_map_gpu = blockMatchergpu.disparity_map;
+
+    std::cout << disparity_map_gpu[idx0] << " DISPARITY_MAP_GPU " << " \n";
+    std::cout << disparity_map_gpu[idx1] << " DISPARITY_MAP_GPU " << " \n";
+    std::cout << disparity_map_gpu[idx2] << " DISPARITY_MAP_GPU " << " \n";
+
     return 0;
 }

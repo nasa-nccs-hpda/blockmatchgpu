@@ -35,5 +35,7 @@ int main() {
     // Access the disparity map (disparity values are stored in disparityProcessor.disparity_map)
     std::vector<double> disparity_map = blockMatchergpu.disparity_map;
 
+    std::cout << disparity_map[0] << " DISPARITY_MAP_GPU " << " \n";
+
     return 0;
 }
