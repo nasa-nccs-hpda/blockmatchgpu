@@ -1,8 +1,10 @@
 #include "BlockMatcherGPU.h"
 #include <iostream>
 #include <cmath>
-#include <nvToolsExt.h>
-#include <nvToolsExtCuda.h>
+#include <nvtx3/nvToolsExt.h>
+#include <nvtx3/nvToolsExtCuda.h>
+#include "timer.h"
+timer t0;
 
 #define NVTX_START(name) nvtxRangePushA(name)
 #define NVTX_STOP() nvtxRangePop()
@@ -60,7 +62,7 @@ __global__ void compute_disparity_gpu(const double* left_image, const double* ri
         for (int j = col + half_block_size; j < c - half_block_size; j += xthreads) {
 
             int min_disparity = 0;
-            double min_sos = 179769000000000000; // max of what a double precision would get us
+            double min_sos = 179769000000000000; // make it really large
 
             // Search within the specified search range
             for (int d = 0; d <= max_displacement; d++) {
@@ -94,7 +96,7 @@ void BlockMatcherGPU::compute_disparity(const std::vector<double>& left_image, c
     int max_displacement = search_range;
     // int block_size_1d = block_size * block_size;
 
-    std::cout << "BLOCKDEF" << "\n";
+    std::cout << "[GPU] BLOCKDEF" << "\n";
     dim3 threads = {32, 32};
     dim3 blocks;
 
@@ -110,7 +112,7 @@ void BlockMatcherGPU::compute_disparity(const std::vector<double>& left_image, c
     // dim3 blockDim(block_size, block_size);
     // dim3 gridDim((c - 2 * half_block_size + blockDim.x - 1) / blockDim.x + 1, (r - 2 * half_block_size + blockDim.y - 1) / blockDim.y + 1);
 
-    std::cout << "MALLOC CUDA" << "\n";
+    std::cout << "[GPU] cudaMallocManaged step" << "\n";
 
     double *left_image_device;
     double *right_image_device;
@@ -123,31 +125,34 @@ void BlockMatcherGPU::compute_disparity(const std::vector<double>& left_image, c
     cudaMallocManaged(&kernelCutLeft, block_size*block_size*sizeof(double));
     cudaMallocManaged(&kernelCutRight, block_size*block_size*sizeof(double));
 
-    std::cout << "SIZE: " << left_image.size() << "\n";
+    std::cout << "[GPU] SIZE: " << left_image.size() << "\n";
 
-    std::cout << "ALLOCATING AND COPY" << "\n";
-    // NVTX_START("Allocating and copying GPU memory");
+    std::cout << "[GPU] ALLOCATING AND COPY" << "\n";
+    NVTX_START("Allocating and copying GPU memory");
     for (int i = 0; i < left_image.size(); i++){
         left_image_device[i] = left_image[i];
         right_image_device[i] = right_image[i];
         disparity_map_device[i] = 0.0f;
     }
-    // NVTX_STOP();
+    NVTX_STOP();
     
-    std::cout << "STARTING COMP" << "\n";
+    std::cout << "[GPU] STARTING COMP" << "\n";
     int d_block_size = block_size * block_size;
     
-    // NVTX_START("GPU Exec");
+    NVTX_START("GPU Exec");
+    t0.tick();
     compute_disparity_gpu<<<blocks, threads>>>(left_image_device, right_image_device, disparity_map_device, r, c, block_size, max_displacement, half_block_size, d_block_size);
-
     cudaDeviceSynchronize();
-    /// NVTX_STOP();
+    double dt = t0.tock();
+    NVTX_STOP();
 
     for (int i = 0; i < left_image.size(); i++){
         disparity_map[i] = disparity_map_device[i];
     }
-    
-    std::cout << "DONE GPU" << "\n";
+    printf("[GPU] Thread structure: (%u, %u) * (%u, %u) == %u threads\n", blocks.x, blocks.y, threads.x, threads.x, blocks.x*blocks.y*threads.x*threads.x);
+    printf("[GPU] Time: %f\n", dt);
+    printf("[GPU] GB: %f\n", r*c*sizeof(double)/1e9);
+    printf("[GPU] GB/s: %f\n", r*c*sizeof(double)/dt/1e9);
 
 }
 

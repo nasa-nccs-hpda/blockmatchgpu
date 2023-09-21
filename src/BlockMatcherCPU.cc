@@ -1,6 +1,8 @@
 #include "BlockMatcherCPU.h"
 #include <iostream>
 #include <cmath>
+#include "timer.h"
+timer t1;
 
 BlockMatcherCPU::BlockMatcherCPU(int rows, int cols, int block_size, int search_range) {
     r = rows;
@@ -42,6 +44,7 @@ double BlockMatcherCPU::compute_box_sum(const std::vector<double>& kernelCutLeft
 }
 
 void BlockMatcherCPU::compute_disparity(const std::vector<double>& left_image, const std::vector<double>& right_image) {
+    t1.tick();
     int max_displacement = search_range;
 
     for (int i = half_block_size; i < r - half_block_size; i++) {
@@ -68,6 +71,7 @@ void BlockMatcherCPU::compute_disparity(const std::vector<double>& left_image, c
                 std::vector<double> kernelCutRight(block_size * block_size, 0.0);
                 for (int y = -half_block_size; y <= half_block_size; y++) {
                     for (int x = -half_block_size; x <= half_block_size; x++) {
+                        // int idxRight = (i + y) * c + (j + x + d);
                         kernelCutRight[(y + half_block_size) * block_size + (x + half_block_size)] = right_image[(i + y) * c + (j + x + d)];
                     }
                 }
@@ -86,6 +90,10 @@ void BlockMatcherCPU::compute_disparity(const std::vector<double>& left_image, c
             disparity_map[i * c + j] = min_disparity;
         }
     }
+    double dt = t1.tock();
+    printf("[CPU] Time: %f\n", dt);
+    printf("[CPU] GB: %f\n", r*c*sizeof(double)/1e9);
+    printf("[CPU] GB/s: %f\n", r*c*sizeof(double)/dt/1e9);
 }
 
 std::vector<double>& BlockMatcherCPU::getDisparityMap() {

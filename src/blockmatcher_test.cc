@@ -6,9 +6,9 @@
 #include <cassert>
 
 int main() {
-    int rows = 1000;
-    int cols = 1000;
-    int block_size = 11;
+    int rows = 5700;
+    int cols = 5300;
+    int block_size = 21;
     int search_range = 20;
 
     // Create instances of the left and right image data (dummy data)
@@ -20,6 +20,9 @@ int main() {
         for (int j = 0; j < cols; ++j) {
             left_image[i * cols + j] = static_cast<double>(rand() % 256);  // Random values between 0 and 255
             right_image[i * cols + j] = static_cast<double>(rand() % 256);
+            //double s =  static_cast<double>(rand() % 256);
+            //left_image[i * cols + j] = s;  // Random values between 0 and 255
+            //right_image[i * cols + j] = s;
         }
     }
 

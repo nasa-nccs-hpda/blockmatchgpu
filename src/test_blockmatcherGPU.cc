@@ -3,11 +3,13 @@
 
 #include <nvToolsExt.h>
 #include <nvToolsExtCuda.h>
+// #include <opencv2/opencv.hpp>
 
+// using namespace cv;
 
 int main() {
-    int rows = 2000;
-    int cols = 2000;
+    int rows = 5700;
+    int cols = 4700;
     int block_size = 21;
     int search_range = 20;
 
@@ -18,8 +20,9 @@ int main() {
     // Populate the dummy data (e.g., random values for demonstration)
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
-            left_image[i * cols + j] = static_cast<double>(rand() % 256);  // Random values between 0 and 255
-            right_image[i * cols + j] = static_cast<double>(rand() % 256);
+            double s =  static_cast<double>(rand() % 256);
+            left_image[i * cols + j] = s;  // Random values between 0 and 255
+            right_image[i * cols + j] = s;
         }
     }
 
