@@ -65,6 +65,27 @@ __global__ void gpu_sum_of_squares(double* kernel_cut_left, double* kernel_cut_r
 
 }
 
+__global__ void gpu_sum_of_squares_v2(double* kernel_cut_left, double* kernel_cut_right, int kernel_size, float*  global_sum_of_squares) 
+{
+
+    int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
+    int nthreads = gridDim.x * blockDim.x;
+
+    double sum_of_squares = 0.0;
+
+    // Iterate over the pixels in the cutouts and compute the Sum of Squares.
+    for (size_t i = thread_id; i < kernel_size; i += nthreads) {
+        double diff = kernel_cut_left[i] - kernel_cut_right[i];
+        sum_of_squares += diff * diff;
+        global_sum_of_squares[i] = sum_of_squares;
+    }
+
+    // reduction process
+    //atomicAdd(global_sum_of_squares, (float)sum_of_squares);
+    //global_sum_of_squares
+
+}
+
 double BlockMatcherGPU::compute_sos_gpu(
             const std::vector<double>& kernelCutLeft,
             const std::vector<double>& kernelCutRight
@@ -92,7 +113,8 @@ double BlockMatcherGPU::compute_sos_gpu(
 
     // overall variables to fill in
     double sum_of_squares = 0.0;
-    float* global_sum_of_squares;
+    //float* global_sum_of_squares;
+    std::vector<float> global_sum_of_squares(rows * cols, 0);
 
     NVTX_START("Allocating and copying GPU memory");
     //cout << "Allocating and copying GPU memory\n";
@@ -205,7 +227,7 @@ void BlockMatcherGPU::compute_disparity(const std::vector<double>& left_image, c
                 //cout << "Left side kernel " << kernelCutLeft.size() << "\n";
                 //cout << "Right side kernel " << kernelCutRight.size() << "\n";
 
-                double sos = compute_sos_gpu(kernelCutLeft, kernelCutRight);
+                double sos = compute_sos(kernelCutLeft, kernelCutRight);
 
                 //cout << "Done with compute_sos_gpu\n";
 
@@ -282,6 +304,141 @@ void BlockMatcherGPU::compute_disparity_gpu(const std::vector<double>& left_imag
             disparity_map[i * c + j] = min_disparity;
         }
     }
+}
+
+void BlockMatcherGPU::compute_disparity_gpu_v2(const std::vector<double>& left_image, const std::vector<double>& right_image) {
+
+    // defaults from Lars, set via function once we get the GPU kernel working
+    dim3 threads = {1024};
+    dim3 blocks;
+
+    // initialize cuda variables
+    NVTX_START("Initializing Cuda inside compute Disparity");
+    cudaFree(0);
+    int deviceID;
+    cudaDeviceProp prop;
+    cudaGetDevice(&deviceID);
+    cudaGetDeviceProperties(&prop, deviceID); 
+    blocks = {(unsigned)prop.multiProcessorCount};
+    NVTX_STOP();
+
+    // overall variables to fill in
+    double sum_of_squares = 0.0;
+    float* global_sum_of_squares;
+
+    NVTX_START("Allocating and copying GPU memory");
+    //cout << "Allocating and copying GPU memory\n";
+    
+    double* left_image_device;
+    double* right_image_device;
+    float* global_sum_of_squares_device;
+
+    //cudaMallocManaged(&p, kernelCutRight.size()*sizeof(int));
+    cudaMallocManaged(&left_image_device, left_image.size()*sizeof(double));
+    cudaMallocManaged(&right_image_device, right_image.size()*sizeof(double));
+    cudaMallocManaged(&global_sum_of_squares_device, sizeof(float));
+
+    cudaError_t err = cudaGetLastError();
+    if (err) {
+        printf("GPU Error: %s\n", cudaGetErrorString(err));
+    }
+
+    //cout << "Done with cudaMallocManaged\n";
+    //cout << "Size " << kernelCutRight.size()<< "\n";
+
+    // add the values to the GPU - kernelCutLeft, kernelCutRight
+    for (int j = 0; j < right_image.size(); j++) {
+        //cout << j << "\n";
+        left_image_device[j] = left_image[j];
+        right_image_device[j] = right_image[j];
+    }
+    NVTX_STOP();
+
+    // define displacement
+    int max_displacement = search_range;
+    cout << "Max displacement " << max_displacement << "\n";
+
+    // defining disparity values
+    int min_disparity = 0;
+    double min_sos = std::numeric_limits<double>::max();
+
+    // double sos = compute_sos_gpu(kernelCutLeft, kernelCutRight);
+
+    NVTX_START("GPU Exec");
+    t0.tick();
+    gpu_sum_of_squares<<<blocks, threads>>>(left_image_device, right_image_device, right_image.size(), global_sum_of_squares_device);
+    cudaDeviceSynchronize();
+
+    err = cudaGetLastError();
+    if (err) {
+        printf("GPU Error: %s\n", cudaGetErrorString(err));
+    }
+
+    double dt = t0.tock();
+    NVTX_STOP();
+
+    /*
+
+
+    int max_displacement = search_range;
+
+    cout << "Max displacement " << max_displacement << "\n";
+
+    for (int i = half_block_size; i < r - half_block_size; i++) {
+        for (int j = half_block_size; j < c - half_block_size; j++) {
+            
+            // Take a cutout centered on each pixel in the left image
+            std::vector<double> kernelCutLeft(block_size * block_size, 0.0);
+            for (int y = -half_block_size; y <= half_block_size; y++) {
+                for (int x = -half_block_size; x <= half_block_size; x++) {
+                    kernelCutLeft[(y + half_block_size) * block_size + (x + half_block_size)] = left_image[(i + y) * c + (j + x)];
+                }
+            }
+
+            int min_disparity = 0;
+            double min_sos = std::numeric_limits<double>::max();
+            // std::cout << i << " ";
+            // std::cout << std::endl;
+
+            // Search within the specified search range
+            for (int d = 0; d <= max_displacement; d++) {
+                // std::cout << "Searching disparity range" << d << " ";
+                // std::cout << std::endl;
+                // Shift the right image by the current disparity
+                std::vector<double> kernelCutRight(block_size * block_size, 0.0);
+                for (int y = -half_block_size; y <= half_block_size; y++) {
+                    for (int x = -half_block_size; x <= half_block_size; x++) {
+                        kernelCutRight[(y + half_block_size) * block_size + (x + half_block_size)] = right_image[(i + y) * c + (j + x - d)];
+                    }
+                }
+
+                // Compute the Sum of Squares (SOS) between the cutout and the matching cutout
+                //double sos = compute_sos(kernelCutLeft, kernelCutRight);
+                //cout << "Sum of squares output " << sos << " \n";
+
+                // call the global function here
+                //cout << "Calling compute_sos_gpu\n";
+                //cout << "Left side kernel " << kernelCutLeft.size() << "\n";
+                //cout << "Right side kernel " << kernelCutRight.size() << "\n";
+
+                double sos = compute_sos_gpu(kernelCutLeft, kernelCutRight);
+
+                //cout << "Done with compute_sos_gpu\n";
+
+                // for loop to sum the values
+
+                // Update the disparity if the SOS is smaller
+                if (sos < min_sos) {
+                    min_sos = sos;
+                    min_disparity = d;
+                }
+            }
+
+            // Store the disparity in the disparity map
+            disparity_map[i * c + j] = min_disparity;
+        }
+    }
+    */
 }
 
 std::vector<double>& BlockMatcherGPU::getDisparityMap() {

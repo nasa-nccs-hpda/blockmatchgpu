@@ -7,15 +7,15 @@
 #include <gdal.h>
 #include <gdal_priv.h>
 
-int main() {
-    
-    int rows = 1000;
-    int cols = 1000;
+
+int main(int argc, char** argv) {
 
     int block_size = 11;
     int search_range = 20;
 
-    /*
+    int rows = 1000;
+    int cols = 1000;
+
     // Create instances of the left and right image data (dummy data)
     std::vector<double> left_image(rows * cols, 0);
     std::vector<double> right_image(rows * cols, 0);
@@ -32,7 +32,9 @@ int main() {
     // Adding gdal components
     GDALAllRegister(); // Register GDAL drivers
 
-    // set filenames
+    // set filename variables
+    const char* leftImagePath;
+    const char* rightImagePath;
 
     // if filename is specified, read that filename
 	if (argc > 1) {
@@ -41,8 +43,8 @@ int main() {
 	}
 
     // Open the left and right images using GDAL
-    GDALDataset *leftImageDataset = static_cast<GDALDataset *>(GDALOpen("/gpfsm/dnb06/projects/p206/code/hackathon/test_cuda_function/aster-L.tif", GA_ReadOnly));
-    GDALDataset *rightImageDataset = static_cast<GDALDataset *>(GDALOpen("/gpfsm/dnb06/projects/p206/code/hackathon/test_cuda_function/aster-R.tif", GA_ReadOnly));
+    GDALDataset *leftImageDataset = static_cast<GDALDataset *>(GDALOpen("/nobackup/jacaraba/development/out_stereo/run-L.tif", GA_ReadOnly));
+    GDALDataset *rightImageDataset = static_cast<GDALDataset *>(GDALOpen("/nobackup/jacaraba/development/out_stereo/run-R.tif", GA_ReadOnly));
 
     if (!leftImageDataset || !rightImageDataset)
     {
@@ -52,42 +54,37 @@ int main() {
         return 1;
     }
 
+    // get number of columns and rows, left and right images have the same size
     int cols = leftImageDataset->GetRasterXSize();
     int rows = leftImageDataset->GetRasterYSize();
 
-    // Create C-style arrays for left and right images
-    double **left_image = new double *[rows];
-    double **right_image = new double *[rows];
+    // output some of the information
+    std::cout << "ROWS" << " " << rows << " \n";
+    std::cout << "COLS" << " " << cols << " \n";
 
-    std::cout << "Allocating\n" << " ";
+    // define vectors
+    std::vector<double> left_image(rows*cols);
+    std::vector<double> right_image(rows*cols);
 
-    for (int i = 0; i < rows; ++i)
-    {
-        left_image[i] = new double[cols];
-        right_image[i] = new double[cols];
-    }
-
-    std::cout << "Reading in\n" << " ";
-    // Read data into the C-style arrays
-    leftImageDataset->GetRasterBand(1)->RasterIO(GF_Read, 0, 0, cols, rows, left_image, cols, rows, GDT_Float32, 0, 0);
-    rightImageDataset->GetRasterBand(1)->RasterIO(GF_Read, 0, 0, cols, rows, right_image, cols, rows, GDT_Float32, 0, 0);
-    std::cout << "Done copying\n" << " ";
-    GDALClose(leftImageDataset);
-    GDALClose(rightImageDataset);
-    std::cout << "Closed\n" << " ";
+    // read the imagery and load the data into the vector dataset
+    leftImageDataset->GetRasterBand(1)->RasterIO(GF_Read, 0, 0, cols, rows, left_image.data(), cols, rows, GDT_Float32, 0, 0);
+    rightImageDataset->GetRasterBand(1)->RasterIO(GF_Read, 0, 0, cols, rows, right_image.data(), cols, rows, GDT_Float32, 0, 0);
     */
 
     // Create a BlockMatcherGPU instance
     BlockMatcherGPU blockMatchergpu(rows, cols, block_size, search_range);
 
-    std::cout << "ROWS" << " ";
-    std::cout << rows << " ";
-    std::cout << cols << "\n";
     // Compute the disparity map using the dummy data
-    blockMatchergpu.compute_disparity(left_image, right_image);
+    //blockMatchergpu.compute_disparity(left_image, right_image);
+    //blockMatchergpu.compute_disparity_gpu(left_image, right_image);
+    blockMatchergpu.compute_disparity_gpu_v2(left_image, right_image);
+
 
     // Access the disparity map (disparity values are stored in disparityProcessor.disparity_map)
     std::vector<double> disparity_map = blockMatchergpu.disparity_map;
 
+    //GDALClose(leftImageDataset);
+    //GDALClose(rightImageDataset);
+   
     return 0;
 }
