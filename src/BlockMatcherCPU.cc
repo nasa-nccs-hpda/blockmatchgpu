@@ -64,10 +64,11 @@ void BlockMatcherCPU::compute_disparity(const std::vector<double>& left_image, c
                 // std::cout << "Searching disparity range" << d << " ";
                 // std::cout << std::endl;
                 // Shift the right image by the current disparity
+
                 std::vector<double> kernelCutRight(block_size * block_size, 0.0);
                 for (int y = -half_block_size; y <= half_block_size; y++) {
                     for (int x = -half_block_size; x <= half_block_size; x++) {
-                        kernelCutRight[(y + half_block_size) * block_size + (x + half_block_size)] = right_image[(i + y) * c + (j + x - d)];
+                        kernelCutRight[(y + half_block_size) * block_size + (x + half_block_size)] = right_image[(i + y) * c + (j + x + d)];
                     }
                 }
 

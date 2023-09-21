@@ -6,9 +6,9 @@
 
 
 int main() {
-    int rows = 1000;
-    int cols = 1000;
-    int block_size = 11;
+    int rows = 2000;
+    int cols = 2000;
+    int block_size = 21;
     int search_range = 20;
 
     // Create instances of the left and right image data (dummy data)

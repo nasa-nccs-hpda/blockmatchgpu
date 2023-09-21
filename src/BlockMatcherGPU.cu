@@ -69,7 +69,7 @@ __global__ void compute_disparity_gpu(const double* left_image, const double* ri
                 for (int y = -half_block_size; y <= half_block_size; y++) {
                     for (int x = -half_block_size; x <= half_block_size; x++) {
                         int left_idx = (i + y) * c + (j + x);
-                        int right_idx = (i + y) * c + (j + x - d);
+                        int right_idx = (i + y) * c + (j + x + d);
                         double left_pixel = left_image[left_idx];
                         double right_pixel = right_image[right_idx];
                         double diff = left_pixel - right_pixel;
@@ -130,7 +130,7 @@ void BlockMatcherGPU::compute_disparity(const std::vector<double>& left_image, c
     for (int i = 0; i < left_image.size(); i++){
         left_image_device[i] = left_image[i];
         right_image_device[i] = right_image[i];
-        disparity_map_device[i] = -7.0f;
+        disparity_map_device[i] = 0.0f;
     }
     // NVTX_STOP();
     

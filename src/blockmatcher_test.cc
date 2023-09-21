@@ -3,6 +3,7 @@
 #include "BlockMatcherGPU.h" 
 #include <nvToolsExt.h>
 #include <nvToolsExtCuda.h>
+#include <cassert>
 
 int main() {
     int rows = 1000;
@@ -52,6 +53,12 @@ int main() {
     std::cout << disparity_map_gpu[idx0] << " DISPARITY_MAP_GPU " << " \n";
     std::cout << disparity_map_gpu[idx1] << " DISPARITY_MAP_GPU " << " \n";
     std::cout << disparity_map_gpu[idx2] << " DISPARITY_MAP_GPU " << " \n";
+
+    for (int i = 0; i < disparity_map_cpu.size(); i++){
+        // bool ass = disparity_map_cpu[i] == disparity_map_gpu[i];
+        // std::cout << i << " " << ass << " " << disparity_map_cpu[i] << " " << disparity_map_gpu[i] << "\n";
+        assert(disparity_map_cpu[i] == disparity_map_gpu[i]);
+    }
 
     return 0;
 }
