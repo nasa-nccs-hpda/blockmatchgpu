@@ -1,10 +1,12 @@
 #ifndef STEREOCORRELATOR_H
 #define STEREOCORRELATOR_H
 
+#include <string>
+
 class StereoCorrelator{
 public:
-    StereoCorrelator(const std::string &leftImagePath, const std::string &rightImagePath,
-                        int block_size, int search_range, const std::string &outputImagePath);
+    StereoCorrelator(const std::string& leftImagePath, const std::string& rightImagePath,
+                    int block_size, int search_range, const std::string& outputImagePath);
 
     void calculateDisparityMap();
 
