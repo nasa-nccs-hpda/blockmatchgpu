@@ -4,6 +4,8 @@
 #include <nvToolsExtCuda.h>
 #include <gdal.h>
 #include <gdal_priv.h>
+#include "cpl_string.h"
+#include <errno.h>
 
 int main(int argc, char** argv) {
 
@@ -20,7 +22,8 @@ int main(int argc, char** argv) {
         // set image paths
 		leftImagePath = argv[1];
         rightImagePath = argv[2];
-    } else {
+    }
+    else {
         std::cerr << "Error: Missing left and right raster paths" << std::endl;
         return 1;
     }
@@ -72,6 +75,14 @@ int main(int argc, char** argv) {
     std::cout << disparity_map[0] << " DISPARITY_MAP_GPU " << " \n";
 
     // print out the contents of the disparity_map
+    GDALDriver *driver = GetGDALDriverManager()->GetDriverByName("GTiff");
+    GDALDataset *disparityDataset = driver->Create("disparity.tif", cols, rows, 1, GDT_Float32, nullptr);
+    disparityDataset->GetRasterBand(1)->RasterIO(GF_Write, 0, 0, cols, rows, disparity_map.data(), cols, rows, GDT_Float32, 0, 0);
+
+    // Close the GDAL dataset
+    GDALClose(disparityDataset);
+    GDALClose(leftImageDataset);
+    GDALClose(rightImageDataset);
 
     return 0;
 }
