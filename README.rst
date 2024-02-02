@@ -6,8 +6,8 @@ blockmatchgpu
 
 Temp Placeholder
 
-* GitHub repo: https://github.com/nasa-cisto-ai/blockmatchgpu 
-* Documentation: https://nasa-cisto-ai.github.io/blockmatchgpu
+* GitHub repo: https://github.com/nasa-nccs-hpda/blockmatchgpu 
+* Documentation: https://nasa-nccs-hpda.github.io/blockmatchgpu/
 
 **Contents**
 
