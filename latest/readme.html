@@ -52,10 +52,8 @@
 <li class="toctree-l3"><a class="reference internal" href="#installation">Installation</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#infrastructure">Infrastructure</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#manual-testing">Manual Testing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#authors">Authors</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#contributors">Contributors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#contributing">Contributing</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#report-bugs">Report Bugs</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#fix-bugs">Fix Bugs</a></li>
@@ -64,7 +62,6 @@
 <li class="toctree-l3"><a class="reference internal" href="#submit-feedback">Submit Feedback</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#citations">Citations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
 </ul>
 </li>
@@ -97,7 +94,7 @@
   <section id="blockmatchgpu">
 <h1>blockmatchgpu<a class="headerlink" href="#blockmatchgpu" title="Permalink to this heading"></a></h1>
 <p><strong>Block Matcher GPU</strong></p>
-<p>Temp Placeholder</p>
+<p>BlockMatchGPU is a mini-app implementation of the standard block-matching algorithm used to generate a disparity map given a pair of stereo images.</p>
 <ul class="simple">
 <li><p>GitHub repo: <a class="reference external" href="https://github.com/nasa-nccs-hpda/blockmatchgpu">https://github.com/nasa-nccs-hpda/blockmatchgpu</a></p></li>
 <li><p>Documentation: <a class="reference external" href="https://nasa-nccs-hpda.github.io/blockmatchgpu/">https://nasa-nccs-hpda.github.io/blockmatchgpu/</a></p></li>
@@ -107,38 +104,44 @@
 <li><p><a class="reference internal" href="#objectives">Objectives</a></p></li>
 <li><p><a class="reference internal" href="#background">Background</a></p></li>
 <li><p><a class="reference internal" href="#getting-started">Getting Started</a></p></li>
-<li><p><a class="reference internal" href="#infrastructure">Infrastructure</a></p></li>
 <li><p><a class="reference internal" href="#manual-testing">Manual Testing</a></p></li>
 <li><p><a class="reference internal" href="#authors">Authors</a></p></li>
-<li><p><a class="reference internal" href="#contributors">Contributors</a></p></li>
 <li><p><a class="reference internal" href="#contributing">Contributing</a></p></li>
-<li><p><a class="reference internal" href="#citations">Citations</a></p></li>
 <li><p><a class="reference internal" href="#references">References</a></p></li>
 </ul>
 <section id="objectives">
 <h2>Objectives<a class="headerlink" href="#objectives" title="Permalink to this heading"></a></h2>
-<ul class="simple">
-<li><p>Temp placeholder</p></li>
-</ul>
+<p>BlockMatchGPU is a mini-app implementation of the standard block-matching algorithm used to generate a disparity map given a pair of stereo images.</p>
+<p>The current implementation is very simple and was written as a proof-of-concept for accelerating disparity map calculation algorithms using GPUs.</p>
+<p>Cost function used: sum-of-squares</p>
 </section>
 <section id="background">
 <h2>Background<a class="headerlink" href="#background" title="Permalink to this heading"></a></h2>
-<p>Temp Placeholder</p>
+<p>Developed as part of a NASA OpenHackathon (Sep 2023)</p>
 </section>
 <section id="getting-started">
 <h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this heading"></a></h2>
 <section id="installation">
 <h3>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h3>
-<p>Temp Placeholder</p>
+<p>Environment:
+* Follow the instructions to create an env that contains the dependencies for Ames Stereo Pipeline (ASP).</p>
+<p>Additional dependencies:
+* Support for nvcc (Nvidia’s compiler)</p>
 </section>
-</section>
-<section id="infrastructure">
-<h2>Infrastructure<a class="headerlink" href="#infrastructure" title="Permalink to this heading"></a></h2>
-<p>Temp Placeholder</p>
 </section>
 <section id="manual-testing">
 <h2>Manual Testing<a class="headerlink" href="#manual-testing" title="Permalink to this heading"></a></h2>
-<p>Placeholder</p>
+<p>To test both CPU and GPU implementations:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">nasa</span><span class="o">-</span><span class="n">nccs</span><span class="o">-</span><span class="n">hpda</span><span class="o">/</span><span class="n">blockmatchgpu</span><span class="o">.</span><span class="n">git</span>
+<span class="n">cd</span> <span class="n">blockmatchgpu</span>
+<span class="n">make</span>
+<span class="o">./</span><span class="n">install</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">block_match_both</span>
+</pre></div>
+</div>
+<p>To run the block-match GPU implementation on rasters:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">install</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">tif_block_match_gpu</span> <span class="o">&lt;</span><span class="n">left</span> <span class="n">image</span> <span class="n">path</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">right</span> <span class="n">image</span> <span class="n">path</span><span class="o">&gt;</span>
+</pre></div>
+</div>
 </section>
 <section id="authors">
 <h2>Authors<a class="headerlink" href="#authors" title="Permalink to this heading"></a></h2>
@@ -146,12 +149,6 @@
 <li><p>Jordan Alexis Caraballo-Vega, <a class="reference external" href="mailto:jordan&#46;a&#46;caraballo-vega&#37;&#52;&#48;nasa&#46;gov">jordan<span>&#46;</span>a<span>&#46;</span>caraballo-vega<span>&#64;</span>nasa<span>&#46;</span>gov</a></p></li>
 <li><p>Caleb S. Spradlin, <a class="reference external" href="mailto:caleb&#46;s&#46;spradlin&#37;&#52;&#48;nasa&#46;gov">caleb<span>&#46;</span>s<span>&#46;</span>spradlin<span>&#64;</span>nasa<span>&#46;</span>gov</a></p></li>
 <li><p>Jian Li, <a class="reference external" href="mailto:jian&#46;li&#37;&#52;&#48;nasa&#46;gov">jian<span>&#46;</span>li<span>&#64;</span>nasa<span>&#46;</span>gov</a></p></li>
-</ul>
-</section>
-<section id="contributors">
-<h2>Contributors<a class="headerlink" href="#contributors" title="Permalink to this heading"></a></h2>
-<ul class="simple">
-<li><p>Temp</p></li>
 </ul>
 </section>
 <section id="contributing">
@@ -195,12 +192,6 @@ in docstrings, or even on the web in blog posts, articles, and such.</p>
 <li><p>Remember that this is a volunteer-driven project, and that contributions are welcome :)</p></li>
 </ul>
 </section>
-</section>
-<section id="citations">
-<h2>Citations<a class="headerlink" href="#citations" title="Permalink to this heading"></a></h2>
-<ul class="simple">
-<li><p>Temp</p></li>
-</ul>
 </section>
 <section id="references">
 <h2>References<a class="headerlink" href="#references" title="Permalink to this heading"></a></h2>
