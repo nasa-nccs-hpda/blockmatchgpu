@@ -4,7 +4,7 @@ blockmatchgpu
 
 **Block Matcher GPU**
 
-Temp Placeholder
+BlockMatchGPU is a mini-app implementation of the standard block-matching algorithm used to generate a disparity map given a pair of stereo images.
 
 * GitHub repo: https://github.com/nasa-nccs-hpda/blockmatchgpu 
 * Documentation: https://nasa-nccs-hpda.github.io/blockmatchgpu/
@@ -14,23 +14,25 @@ Temp Placeholder
 - `Objectives`_
 - `Background`_
 - `Getting Started`_
-- `Infrastructure`_
 - `Manual Testing`_
 - `Authors`_
-- `Contributors`_
 - `Contributing`_
-- `Citations`_
 - `References`_
 
 Objectives
 ============
 
-* Temp placeholder
+BlockMatchGPU is a mini-app implementation of the standard block-matching algorithm used to generate a disparity map given a pair of stereo images.
+
+The current implementation is very simple and was written as a proof-of-concept for accelerating disparity map calculation algorithms using GPUs.
+
+Cost function used: sum-of-squares
+
 
 Background
 ============
 
-Temp Placeholder
+Developed as part of a NASA OpenHackathon (Sep 2023)
 
 Getting Started
 =================
@@ -38,17 +40,26 @@ Getting Started
 Installation
 --------------
 
-Temp Placeholder
+Environment:
+* Follow the instructions to create an env that contains the dependencies for Ames Stereo Pipeline (ASP). 
 
-Infrastructure
-=================
-
-Temp Placeholder
+Additional dependencies:
+* Support for nvcc (Nvidia's compiler)
 
 Manual Testing
 ====================
 
-Placeholder
+To test both CPU and GPU implementations::
+
+  git clone https://github.com/nasa-nccs-hpda/blockmatchgpu.git
+  cd blockmatchgpu
+  make
+  ./install/bin/block_match_both
+
+
+To run the block-match GPU implementation on rasters::
+
+  ./install/bin/tif_block_match_gpu <left image path> <right image path>
 
 Authors
 ====================
@@ -57,10 +68,6 @@ Authors
 * Caleb S. Spradlin, caleb.s.spradlin@nasa.gov
 * Jian Li, jian.li@nasa.gov
 
-Contributors
-====================
-
-* Temp
 
 Contributing
 ====================
@@ -110,11 +117,6 @@ If you are proposing a feature:
 * Explain in detail how it would work.
 * Keep the scope as narrow as possible, to make it easier to implement.
 * Remember that this is a volunteer-driven project, and that contributions are welcome :)
-
-Citations
-============
-
-* Temp
 
 References
 ============
